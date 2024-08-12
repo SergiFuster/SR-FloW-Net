@@ -14,6 +14,8 @@ sys.path.append(directorio_padre)
 
 PLT_COLORS = plt.get_cmap('tab10')
 
+def undo_tensor_format(tensor : np.ndarray):
+    return np.moveaxis(tensor[0], 0, -1)
 def get_colored_optic_flow(optical_flow):
 
     # Calcula la magnitud y dirección del flujo óptico

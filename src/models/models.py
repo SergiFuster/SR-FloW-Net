@@ -328,26 +328,25 @@ class RuNet():
         self.history['training'].append(history_item)
         self.model = model
 
-    def evaluate(self, master_image : np.ndarray, slave_image : np.ndarray):
+    def evaluate(self, image : np.ndarray, resolution : int, ratio : int) -> np.ndarray:
 
-        xtra, ytra = u.prepare_img_dimensions(master_image), u.prepare_img_dimensions(slave_image)
+        assert resolution or ratio, 'Both resolution and ratio are None, at least one must be a valid value'
+        
+        resolution = resolution if resolution else ratio
 
         device = u.get_device()
 
         self.model.to(device)
         self.model.eval()
 
-        xtra, ytra =  torch.tensor(xtra).to(device), torch.tensor(ytra).to(device)
+        input = u.prepare_img_dimensions
+        input = torch.tensor(input).to(device)
 
         with torch.inference_mode():
                     
-            registered, flow, s3sr = self.model(xtra, ytra)
-            registered = registered.cpu().detach().numpy().astype(np.float32)
-            flow = flow.cpu().detach().numpy().astype(np.float32)
-            xtra = xtra.cpu().detach().numpy().astype(np.float32)
-            ytra = ytra.cpu().detach().numpy().astype(np.float32)
-            s3sr = s3sr.cpu().detach().numpy().astype(np.float32)
+            sr = self.model(input, resolution)
 
-        u.show_results(xtra, ytra, s3sr, registered, flow)
+            sr = sr.cpu().detach().numpy().astype(np.float32)
 
-        return registered, xtra, s3sr
+        sr = u.undo_tensor_format(sr)
+        return sr
