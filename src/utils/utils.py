@@ -2,8 +2,9 @@ import numpy as np, h5py, cv2, torch, shutil, os, sys, json, uuid, src.metrics.m
 from datetime import datetime
 from matplotlib import pyplot as plt
 from PIL import Image
+from time import time
 from matplotlib import colors
-from sklearn.decomposition import PCA
+# from sklearn.decomposition import PCA
 
 # Obtén la ruta del directorio actual del script
 directorio_actual = os.path.dirname(os.path.abspath(__file__))
@@ -14,8 +15,15 @@ sys.path.append(directorio_padre)
 
 PLT_COLORS = plt.get_cmap('tab10')
 
+def get_files_path(folder, endswith="", startswith=""):
+    """
+    Return the relative routes of files in folder filtered by endswith and startswith
+    """
+    return [f'{folder}/{file}' for file in os.listdir(folder) if os.path.isfile(f'{folder}/{file}') and file.endswith(endswith) and file.startswith(startswith)]
+
 def undo_tensor_format(tensor : np.ndarray):
     return np.moveaxis(tensor[0], 0, -1)
+
 def get_colored_optic_flow(optical_flow):
 
     # Calcula la magnitud y dirección del flujo óptico
