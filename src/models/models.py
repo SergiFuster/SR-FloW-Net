@@ -4,13 +4,12 @@ import torch.backends.cudnn as cudnn
 from ..data.data import *
 from .codes.model_templates import *
 from .codes.losses import *
+from .codes.unets import *
 from torch.utils.data import TensorDataset, DataLoader
 from ..utils import utils as u
 import torch
 import json
 import time
-
-output_models = "./Sergi/models/fullnet"
 
 class FullNetWrapper():
     def __init__(self, model_path=None):
@@ -275,13 +274,13 @@ class RuNet():
 
         model = SRUNet(channels)
 
-        print('-- Model training')
-
         cudnn.benchmark = True
 
         device = u.get_device()
 
         model.to(device)
+
+        print('-- Model training')
 
         model.train()
 
