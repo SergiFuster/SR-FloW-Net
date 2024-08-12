@@ -4,6 +4,7 @@ import torch.backends.cudnn as cudnn
 from ..data.data import *
 from .codes.model_templates import *
 from .codes.losses import *
+from torch.utils.data import TensorDataset, DataLoader
 from ..utils import utils as u
 import torch
 import json
@@ -217,3 +218,137 @@ class FullNetWrapper():
         s2_down, s2sr_fine_tuned, s2sr = np.array(xtra)[0], np.array(s2sr_fine_tuned)[0], np.array(s2sr)[0]
         s2_down, s2sr_fine_tuned, s2sr =  np.moveaxis(s2_down, 0, -1), np.moveaxis(s2sr_fine_tuned, 0, -1), np.moveaxis(s2sr, 0, -1)
         return s2_down, s2_patch, s2sr_fine_tuned, s2sr
+    
+
+class RuNet():
+    def __init__(self, model_path=None):
+        """
+        Parameters
+        ----------
+        hyperparameters : dict
+            Parameters for the model.
+            {
+                'epochs' : int,
+                'learning_rate' : float
+            }
+        """
+        if not model_path:
+            self.model = None 
+            self.history = {'training' : []}
+        else:
+            self.model, self.history = u.load_model(model_path)
+
+    def save(self, path, name=None):
+        """
+        Save the model and its history to a path.
+        """
+        u.save_model(self.model, self.history, path, name)
+
+    def train(self, data : np.ndarray, epochs : int, learning_rate : float, resolution : int=None, ratio : int=None):
+        # region DOCSTRING
+        """
+        Train the model with the given data for the given resolution or ratio with the given hyperparameters.
+        
+        Parameters
+        ----------
+        :param data: expected shape (images, channels, heigth, width)
+        :type data: np.ndarray
+        :param epochs: number of epochs to train the model
+        :type epochs: int
+        :param learning_rate: optimizer learning rate
+        :type learning_rate: float
+        :param resolution: output resolution
+        :type resolution: int
+        :param ratio: original * ratio = output resolution
+        :type ratio: int
+        """
+        # endregion
+        
+        # region Assertions
+        assert resolution or ratio, "Either resolution or ratio must be provided"
+        resolution = resolution if resolution else int(data[2] * ratio)
+        assert resolution > data[2], "Output resolution must be greater than the original image resolution"
+        assert resolution % 16 == 0, "Output resolution must be a multiple of 16 because of the model architecture"
+        # endregion
+
+        batches, channels, heigth, width = data.shape
+
+        model = SRUNet(channels)
+
+        print('-- Model training')
+
+        cudnn.benchmark = True
+
+        device = u.get_device()
+
+        model.to(device)
+
+        model.train()
+
+        opt = torch.optim.Adam(model.parameters(), lr=learning_rate, maximize=False)
+        
+        loss_function = L2().loss
+
+        initial_time = time.time()
+
+        best_model = None
+        best_loss = None
+
+        xtra = torch.tensor(data).to(device)
+        tradata = TensorDataset(xtra)
+        traloader = DataLoader(dataset=tradata, batch_size=1, shuffle=False)
+
+        print(f'-- Training for {epochs} epochs')
+        for epoch in range(epochs):
+            
+            for iteration, batch in enumerate(traloader):
+
+                input = batch[0].to(device)
+                sr = model(input, resolution)
+
+                loss = loss_function(sr, input)
+
+                loss_info = f'loss: {loss.item()})'
+                opt.zero_grad()
+                loss.backward()
+                opt.step()
+
+            epoch_info = f'Epoch: {epoch + 1}'
+            print('  '.join((epoch_info, loss_info)), flush=True)
+
+            if not best_model or loss < best_loss: best_model, best_loss = model.state_dict(), loss
+
+        history_item = {
+            'epochs' : epochs,
+            'data' : data.size,
+            'learning_rate' : learning_rate,
+            'loss' : best_loss.item(),
+            'time' : time.time() - initial_time,
+        }
+
+        self.history['training'].append(history_item)
+        self.model = model
+
+    def evaluate(self, master_image : np.ndarray, slave_image : np.ndarray):
+
+        xtra, ytra = u.prepare_img_dimensions(master_image), u.prepare_img_dimensions(slave_image)
+
+        device = u.get_device()
+
+        self.model.to(device)
+        self.model.eval()
+
+        xtra, ytra =  torch.tensor(xtra).to(device), torch.tensor(ytra).to(device)
+
+        with torch.inference_mode():
+                    
+            registered, flow, s3sr = self.model(xtra, ytra)
+            registered = registered.cpu().detach().numpy().astype(np.float32)
+            flow = flow.cpu().detach().numpy().astype(np.float32)
+            xtra = xtra.cpu().detach().numpy().astype(np.float32)
+            ytra = ytra.cpu().detach().numpy().astype(np.float32)
+            s3sr = s3sr.cpu().detach().numpy().astype(np.float32)
+
+        u.show_results(xtra, ytra, s3sr, registered, flow)
+
+        return registered, xtra, s3sr

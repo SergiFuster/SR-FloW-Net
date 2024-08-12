@@ -458,14 +458,12 @@ class SRUNet(nn.Module):
         self.dconv145 = nn.Conv2d(in_channels=16, out_channels=in_channels, kernel_size=3, padding=1)
         #endregion
 
-    def forward(self, x, ratio):
-        
-        image_size = x.size(2) * ratio
+    def forward(self, x, resolution):
 
-        if image_size % 16 != 0: 
+        if resolution % 16 != 0: 
             raise ValueError("Image size must be a multiple of 16")
         
-        x = F.interpolate(x, size=(image_size, image_size), mode='bicubic', align_corners=True)
+        x = F.interpolate(x, size=(resolution, resolution), mode='bicubic', align_corners=True)
 
         #region Encoder 1
         x = self.activation(self.econv111(x))
