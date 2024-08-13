@@ -224,12 +224,9 @@ class RuNet():
         """
         Parameters
         ----------
-        hyperparameters : dict
-            Parameters for the model.
-            {
-                'epochs' : int,
-                'learning_rate' : float
-            }
+        model_path : str
+            Path to the model to load.
+            If None, a new model will be created.
         """
         if not model_path:
             self.model = None 
@@ -266,7 +263,7 @@ class RuNet():
         # region Assertions
         assert resolution or ratio, "Either resolution or ratio must be provided"
         resolution = resolution if resolution else int(data[2] * ratio)
-        assert resolution > data[2], "Output resolution must be greater than the original image resolution"
+        assert resolution > data.shape[2], "Output resolution must be greater than the original image resolution"
         assert resolution % 16 == 0, "Output resolution must be a multiple of 16 because of the model architecture"
         # endregion
 
