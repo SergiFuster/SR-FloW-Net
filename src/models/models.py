@@ -272,14 +272,13 @@ class RuNet():
 
         cudnn.benchmark = True
 
-        multi_gpu = u.multi_gpu()
-        if multi_gpu:
+        device = u.get_device()
+
+        if u.multi_gpu():
             print('Multiple GPUs detected, using DataParallel')
             model = nn.DataParallel(model)
-            model = model.cuda()
-        else:
-            device = u.get_device()
-            model.to(device)
+
+        model.to(device)
 
         print('-- Model training')
 
@@ -294,19 +293,21 @@ class RuNet():
         best_model = None
         best_loss = None
 
-        xtra = torch.tensor(data).to(device)
+        xtra = torch.tensor(data).float().to(device)
         tradata = TensorDataset(xtra)
-        traloader = DataLoader(dataset=tradata, batch_size=1, shuffle=False)
+        traloader = DataLoader(dataset=tradata, batch_size=1, shuffle=True)
 
         print(f'-- Training for {epochs} epochs')
         for epoch in range(epochs):
             
+            loss = 0
+            
             for iteration, batch in enumerate(traloader):
 
-                input = batch[0].to(device) if not multi_gpu else batch[0].cuda()
-                sr = model(input, resolution)
+                input = batch[0].to(device)
+                output = model(input, resolution)
 
-                loss = loss_function(sr, input)
+                loss = loss_function(output, input)
 
                 loss_info = f'loss: {loss.item()})'
                 opt.zero_grad()

@@ -14,7 +14,7 @@ for i in range(5):
     images = np.array([u.extract_s3mat(route) for route in chosen])
     images = np.moveaxis(images, -1, 1)
     model = RuNet()
-    model.train(images, epochs=1000, learning_rate=0.0001, resolution=5488)
+    model.train(images, epochs=1000, learning_rate=0.0001, resolution=2672)
     model.save('src/experiments/runet')
 
     
