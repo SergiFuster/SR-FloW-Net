@@ -64,6 +64,10 @@ class FullNetWrapper():
 
         model = FullRegNet((channels, heigth, width), super_resolution_state_dict)
 
+        if u.multi_gpu():
+            print('Multiple GPUs detected, using DataParallel')
+            model = nn.DataParallel(model)
+            
         if verbose: print('-- Model training')
 
         cudnn.benchmark = True
@@ -301,7 +305,7 @@ class RuNet():
         for epoch in range(epochs):
             
             loss = 0
-            
+
             for iteration, batch in enumerate(traloader):
 
                 input = batch[0].to(device)
