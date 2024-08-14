@@ -1,5 +1,4 @@
-
-from collections import defaultdict
+import torch.nn as nn
 import torch.backends.cudnn as cudnn
 from ..data.data import *
 from .codes.model_templates import *
@@ -273,9 +272,14 @@ class RuNet():
 
         cudnn.benchmark = True
 
-        device = u.get_device()
-
-        model.to(device)
+        multi_gpu = u.multi_gpu()
+        if multi_gpu():
+            print('Multiple GPUs detected, using DataParallel')
+            model = nn.DataParallel(model)
+            model = model.cuda()
+        else:
+            device = u.get_device()
+            model.to(device)
 
         print('-- Model training')
 
@@ -299,7 +303,7 @@ class RuNet():
             
             for iteration, batch in enumerate(traloader):
 
-                input = batch[0].to(device)
+                input = batch[0].to(device) if not multi_gpu else batch[0].cuda()
                 sr = model(input, resolution)
 
                 loss = loss_function(sr, input)

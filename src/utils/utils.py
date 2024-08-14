@@ -94,6 +94,9 @@ def show_image(img, title):
         plt.title(title)
         plt.show(block=False)
 
+def multi_gpu():
+    return torch.cuda.device_count() > 1
+
 def get_device():
     # Verifica si CUDA (GPU) está disponible
     if torch.cuda.is_available():
