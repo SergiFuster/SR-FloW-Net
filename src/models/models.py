@@ -273,7 +273,7 @@ class RuNet():
         cudnn.benchmark = True
 
         multi_gpu = u.multi_gpu()
-        if multi_gpu():
+        if multi_gpu:
             print('Multiple GPUs detected, using DataParallel')
             model = nn.DataParallel(model)
             model = model.cuda()
