@@ -367,7 +367,7 @@ def save_model(state_dict, history, path, model_name=None):
     -------
     None
     """
-    if not model_name: model_name = f'model-{unique_name()}.tar'
+    if not model_name: model_name = f'model-{unique_name()}.pth'
 
     path = os.path.join(path, model_name)
     

@@ -6,15 +6,16 @@ import os
 model.train('18', epochs=100)
 model.save('src/experiments/fullnet/experiment_0/models', 'test.tar') """
 #model = FullNetWrapper('src/experiments/fullnet/experiment_0/models/test.pth')
-routes = u.get_files_path('data/images/S3')
+routes = u.get_files_path('data/images/mat/S3')
 
 for i in range(5):
     samples = 2**i
     chosen = np.random.choice(routes, samples, replace=False)
+    print(f'Using for training: \n {chosen}')
     images = np.array([u.extract_s3mat(route) for route in chosen])
     images = np.moveaxis(images, -1, 1)
     model = RuNet()
-    model.train(images, epochs=1000, learning_rate=0.0001, resolution=704)
+    model.train(images, epochs=1000, learning_rate=0.0001, resolution=5488)
     model.save('src/experiments/runet')
 
     
