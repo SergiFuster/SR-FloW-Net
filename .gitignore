@@ -1,6 +1,4 @@
 images/
 *venv/
-app.py
-templates/
 experiments/
 __pycache__/

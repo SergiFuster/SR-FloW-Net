@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Explore Files</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+  </head>
+  <body>
+    <div class="container">
+      <h2 class="mt-5">Files</h2>
+      <ul class="list-group">
+        {% for path in paths %}
+          <li class="list-group-item">
+            <a href="{{ url_for('file_action', filepath=path) }}">{{ path | basename }}</a>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </body>
+</html>

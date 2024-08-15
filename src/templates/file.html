@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>File Content</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <style>
+      .scrollable-content {
+        max-height: 500px;
+        overflow-y: scroll;
+        border: 1px solid #ddd;
+        padding: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1 class="mt-5">{{ filename }}</h1>
+      <div class="scrollable-content">
+        <pre>{{ history | tojson(indent=2) }}</pre>
+      </div>
+      <a href="{{ url_for('index') }}" class="btn btn-primary mt-3">Back</a>
+    </div>
+  </body>
+</html>
