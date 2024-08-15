@@ -13,9 +13,9 @@ for i in range(5):
     chosen = np.random.choice(routes, samples, replace=False)
     images = np.array([u.extract_central_patch(u.extract_s3mat(route), 352)[0] for route in chosen])
     images = np.moveaxis(images, -1, 1)
-    model = RuNetv2()
-    model.train(images, epochs=1000, learning_rate=0.0001, upsamplings=2)
-    model.save('src/experiments/runetv2')
+    model = RuNet()
+    model.train(images, epochs=1000, learning_rate=0.0001, ratio=2)
+    model.save('src/experiments/runet')
 
     
 #model.train()
