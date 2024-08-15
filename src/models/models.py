@@ -356,3 +356,129 @@ class RuNet():
 
         sr = u.undo_tensor_format(sr)
         return sr
+    
+class RuNetv2():
+    def __init__(self, model_path=None):
+        """
+        Parameters
+        ----------
+        model_path : str
+            Path to the model to load.
+            If None, a new model will be created.
+        """
+        if not model_path:
+            self.model = None 
+            self.history = {'training' : []}
+        else:
+            self.model, self.history = u.load_model(model_path)
+
+    def save(self, path, name=None):
+        """
+        Save the model and its history to a path.
+        """
+        u.save_model(self.model, self.history, path, name)
+
+    def train(self, data : np.ndarray, epochs : int, learning_rate : float, upsamplings : int):
+        # region DOCSTRING
+        """
+        Train the model with the given data for the given resolution or ratio with the given hyperparameters.
+        
+        Parameters
+        ----------
+        :param data: expected shape (images, channels, heigth, width)
+        :type data: np.ndarray
+        :param epochs: number of epochs to train the model
+        :type epochs: int
+        :param learning_rate: optimizer learning rate
+        :type learning_rate: float
+        :param upsampling: [1, 4] output resolution = 2^upsampling * original image resolution
+        :type upsampling: int
+        """
+        # endregion
+
+        batches, channels, heigth, width = data.shape
+
+        model = SRUNetv2(channels)
+
+        cudnn.benchmark = True
+
+        device = u.get_device()
+
+        if u.multi_gpu():
+            print('Multiple GPUs detected, using DataParallel')
+            model = nn.DataParallel(model)
+
+        model.to(device)
+
+        print('-- Model training')
+
+        model.train()
+
+        opt = torch.optim.Adam(model.parameters(), lr=learning_rate, maximize=False)
+        
+        loss_function = L2().loss
+
+        initial_time = time.time()
+
+        best_model = None
+        best_loss = None
+
+        xtra = torch.tensor(data).float().to(device)
+        tradata = TensorDataset(xtra)
+        traloader = DataLoader(dataset=tradata, batch_size=1, shuffle=True)
+
+        print(f'-- Training for {epochs} epochs')
+        for epoch in range(epochs):
+            
+            loss = 0
+
+            for iteration, batch in enumerate(traloader):
+
+                input = batch[0].to(device)
+                output = model(input, upsamlings=upsamplings)
+
+                loss = loss_function(output, input)
+
+                loss_info = f'loss: {loss.item()})'
+                opt.zero_grad()
+                loss.backward()
+                opt.step()
+
+            epoch_info = f'Epoch: {epoch + 1}'
+            print('  '.join((epoch_info, loss_info)), flush=True)
+
+            if not best_model or loss < best_loss: best_model, best_loss = model.state_dict(), loss
+
+        history_item = {
+            'epochs' : epochs,
+            'data' : data.size,
+            'learning_rate' : learning_rate,
+            'loss' : best_loss.item(),
+            'time' : time.time() - initial_time,
+        }
+
+        self.history['training'].append(history_item)
+        self.model = model
+
+    def evaluate(self, image : np.ndarray, resolution : int, ratio : int) -> np.ndarray:
+
+        assert resolution or ratio, 'Both resolution and ratio are None, at least one must be a valid value'
+        
+        resolution = resolution if resolution else ratio
+
+        device = u.get_device()
+
+        self.model.to(device)
+        self.model.eval()
+
+        input = u.prepare_img_dimensions
+        input = torch.tensor(input).to(device)
+
+        with torch.inference_mode():
+                    
+            sr = self.model(input, resolution)
+
+            sr = sr.cpu().detach().numpy().astype(np.float32)
+
+        sr = u.undo_tensor_format(sr)
+        return sr
