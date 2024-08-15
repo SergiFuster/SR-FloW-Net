@@ -67,7 +67,7 @@ class FullNetWrapper():
         if u.multi_gpu():
             print('Multiple GPUs detected, using DataParallel')
             model = nn.DataParallel(model)
-            
+
         if verbose: print('-- Model training')
 
         cudnn.benchmark = True
@@ -276,11 +276,11 @@ class RuNet():
 
         cudnn.benchmark = True
 
-        device = u.get_device()
+        device = u.get_device(1)
 
-        if u.multi_gpu():
+        """ if u.multi_gpu():
             print('Multiple GPUs detected, using DataParallel')
-            model = nn.DataParallel(model)
+            model = nn.DataParallel(model) """
 
         model.to(device)
 

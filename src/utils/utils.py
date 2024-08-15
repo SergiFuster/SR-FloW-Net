@@ -97,10 +97,10 @@ def show_image(img, title):
 def multi_gpu():
     return torch.cuda.device_count() > 1
 
-def get_device():
+def get_device(gpu=0):
     # Verifica si CUDA (GPU) está disponible
     if torch.cuda.is_available():
-        device = torch.device('cuda:0')
+        device = torch.device(f'cuda:{gpu}')
         # Imprime información sobre la GPU
         print(torch.cuda.get_device_name(0))
         print(f"CUDA Version: {torch.version.cuda}")
