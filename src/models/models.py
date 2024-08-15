@@ -435,7 +435,7 @@ class RuNetv2():
             for iteration, batch in enumerate(traloader):
 
                 input = batch[0].to(device)
-                output = model(input, upsamplings=upsamplings)
+                output = model(input, upsamplings)
 
                 loss = loss_function(output, input)
 

@@ -14,7 +14,7 @@ for i in range(5):
     images = np.array([u.extract_central_patch(u.extract_s3mat(route), 352)[0] for route in chosen])
     images = np.moveaxis(images, -1, 1)
     model = RuNetv2()
-    model.train(images, epochs=100, learning_rate=0.0001, upsamplings=2)
+    model.train(images, epochs=1000, learning_rate=0.0001, upsamplings=2)
     model.save('src/experiments/runetv2')
 
     
