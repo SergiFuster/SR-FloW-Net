@@ -84,6 +84,17 @@ def split_in_quarters(img: np.ndarray) -> np.ndarray:
     h, w, _ = img.shape
     return np.array([img[:h//2, :w//2, :], img[:h//2, w//2:, :], img[h//2:, :w//2, :], img[h//2:, w//2:, :]])
 
+def load_history(path):
+    return torch.load(path, map_location=torch.device('cpu'))['history']
+
+def extract_history_data(history):
+    return history['training'][0]['data']
+
+def extract_history_loss(history):
+    return history['training'][0]['loss']
+
+def extract_history_time(history):
+    return history['training'][0]['time']
 
 def show_image(img, title):
         """
