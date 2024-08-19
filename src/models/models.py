@@ -157,8 +157,8 @@ class FullNet():
             ytra = ytra.cpu().detach().numpy().astype(np.float32)
             s3sr = s3sr.cpu().detach().numpy().astype(np.float32)
 
-        u.show_results(xtra, ytra, s3sr, registered, flow)
-
+        # u.show_results(xtra, ytra, s3sr, registered, flow)
+        registered, xtra, s3sr = list(map(u.undo_tensor_format, [registered, xtra, s3sr]))
         return registered, xtra, s3sr
 
     def sweet_evaluate(model_idx : str):

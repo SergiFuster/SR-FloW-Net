@@ -1,19 +1,25 @@
 from src.utils.utils import *
 from src.models.models import *
 from src.models.codes.losses import *
+from pprint import pprint
 import  os, random
-loss_functions = [
-    NCC(),
-    CC3D(kernel_size=[9, 9, 2]),
-    LNCC3D()
-    
-]
+from time import time
 
-folder_save = 'src/experiments/fullnet'
-models_folder = 'src/experiments/runetv2'
-file = os.listdir(models_folder)[-1]
-for loss_function in loss_functions:
-    model = FullNet()
-    sr_state_dict, _ = u.load_model(os.path.join(models_folder, file))
-    model.train('18', 1000, 0.001, 1024, super_resolution_state_dict=sr_state_dict, loss_function=loss_function)
-    model.save(folder_save)
+master_path = 'data/images/S2/18.mat'
+slave_path = 'data/images/S3/18.mat'
+
+master = u.extract_s2mat(master_path)
+slave = u.extract_s3mat(slave_path)
+
+master, *(_) = u.extract_central_patch(master, 1024)
+slave, *(_) = u.extract_central_patch(slave, 1024//15)
+
+folder = 'src/experiments/fullnet'
+files = os.listdir(folder)
+
+results = {}
+for file in files:
+    model = FullNet(os.path.join(folder, file))
+    
+    registered, _, _ = model.evaluate(master, slave)
+    pprint(u.take_metrics_between_imgs(master, registered))
