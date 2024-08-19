@@ -13,6 +13,9 @@ class NCC:
         self.scale = scale
 
     def loss(self, y_true, y_pred, verbose=True):
+        
+        if y_true.shape[1] > 1: y_true = y_true[:, -1:, :, :]
+        if y_pred.shape[1] > 1: y_pred = y_pred[:, -1:, :, :]
 
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -79,6 +82,9 @@ class NCC:
 
         return -torch.mean(cc)
     
+    def __str__(self) -> str:
+        return "LNCC"
+    
 class CC3D():
     def __init__(self, kernel_size=[9, 9, 9]):
         self.kernel = kernel_size
@@ -113,6 +119,9 @@ class CC3D():
         # if(voxel_weights is not None):
         #	cc = cc * voxel_weights
         return -torch.mean(cc)
+    
+    def __str__(self) -> str:
+        return "CC3D"
 
 class LNCC2D():
     def __init__(self, kernels_size=9):
@@ -230,6 +239,9 @@ class LNCC3D():
         # if(voxel_weights is not None):
         #	cc = cc * voxel_weights
         return -torch.mean(cc)
+    
+    def __str__(self) -> str:
+        return "LNCC3D"
 
 class Grad:
     """

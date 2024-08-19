@@ -10,7 +10,7 @@ import torch
 import json
 import time
 
-class FullNetWrapper():
+class FullNet():
     def __init__(self, model_path=None):
         """
         Parameters
@@ -34,31 +34,22 @@ class FullNetWrapper():
         """
         u.save_model(self.model, self.history, path, name)
 
-    def train(self, image_index, epochs=100, learning_rate=0.001, verbose=True, patch_size=1024, kernel=[9,9,2], PCA=False, n_components=1, normalize_pca=False,
-                super_resolution_state_dict=None, one_channel=False):
+    def train(self, image_index, epochs=100, learning_rate=0.001, patch_size=1024, PCA=False, n_components=1,
+                super_resolution_state_dict=None, loss_function=LNCC3D):
 
-        s2_image = u.extract_s2mat(f'data/images/mat/S2/{image_index}.mat')
-        s3_image = u.extract_s3mat(f'data/images/mat/S3/{image_index}.mat')
+        s2_image = u.extract_s2mat(f'data/images/S2/{image_index}.mat')
+        s3_image = u.extract_s3mat(f'data/images/S3/{image_index}.mat')
 
         s2_patch, *(_) = u.extract_central_patch(s2_image, patch_size) # s2
         s3_patch, *(_) = u.extract_central_patch(s3_image, patch_size // 15) # s3
 
-        if verbose: 
-            u.show_channels_img(s2_patch, 'S2 image patch')
-            u.show_channels_img(s3_patch, 'S3 image patch')
 
         if PCA:
             s2_patch_pca = u.get_PCA(s2_patch, n_components, normalize=normalize_pca)
             s3_patch_pca = u.get_PCA(s3_patch, n_components, normalize=normalize_pca)
-            
-            if verbose:
-                u.show_channels_img(s2_patch, 'S2 PCA patch size')
-                u.show_channels_img(s3_patch, 'S3 PCA patch size')
 
         inputs = (s2_patch_pca, s3_patch_pca) if PCA else (s2_patch, s3_patch)
         xtra, ytra = u.prepare_img_dimensions(inputs[0]), u.prepare_img_dimensions(inputs[1])
-
-        if one_channel: xtra, ytra = xtra[:, -1:, :, :], ytra[:, -1:, :, :]
 
         patches, channels, heigth, width = xtra.shape
 
@@ -68,7 +59,7 @@ class FullNetWrapper():
             print('Multiple GPUs detected, using DataParallel')
             model = nn.DataParallel(model)
 
-        if verbose: print('-- Model training')
+        print('-- Model training')
 
         cudnn.benchmark = True
 
@@ -83,7 +74,7 @@ class FullNetWrapper():
         opt = torch.optim.Adam(model.parameters(), lr=learning_rate, maximize=False)
         print('-- Using Adam optimizer')
         
-        loss_functions = [CC3D(kernel_size=kernel).loss, Grad('l2', loss_mult=1).loss, L2().loss]
+        loss_functions = [loss_function.loss, Grad('l2', loss_mult=1).loss, L2().loss]
 
         weights = [1, 0.5, 0.5]
 
@@ -96,11 +87,6 @@ class FullNetWrapper():
 
         print(f'-- Training for {epochs} epochs')
         for epoch in range(epochs):
-            
-            if epoch == epochs // 2:
-                print(f'-- Halfway through training (epoch {epoch})')
-                print('-- Lowering learning rate')
-                opt = torch.optim.Adam(model.parameters(), lr=learning_rate/10, maximize=False)
 
             reg, flow, s3sr = model(xtra, ytra)   
 
@@ -143,6 +129,7 @@ class FullNetWrapper():
             'image' : image_index,
             'losses' : losses,
             'weights' : weights,
+            'loss_function' : loss_function.__str__(),
             'time' : time.time() - initial_time,
             'PCA' : PCA
         }

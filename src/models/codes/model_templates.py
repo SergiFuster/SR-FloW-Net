@@ -2,6 +2,7 @@ import torch, torch.nn as nn, torch.nn.functional as F
 from torch.distributions.normal import Normal
 from .unets import U_Net2, DualUNet, MinDualUNet, NEDualUNet, MinNEDualUNet, SRUNetv2
 from .layers import SpatialTransformer
+from src.utils import utils as u
  
 class RegNet(nn.Module):
 
@@ -127,7 +128,7 @@ class FullRegNet(nn.Module):
 
         self.super_resolution = SRUNetv2(channels)
 
-        if sr_state_dict: self.super_resolution.load_state_dict(sr_state_dict)
+        if sr_state_dict: self.super_resolution.load_state_dict(u.remove_dataparallel_wrapper(sr_state_dict))
 
     def forward(self, s2, s3):
         assert s2.shape[2] % 16 == 0, 'Size of s2 not multiple of 16'

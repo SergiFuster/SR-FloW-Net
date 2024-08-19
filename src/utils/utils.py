@@ -335,6 +335,27 @@ def unique_name():
     """Generates a unique name constitued by date and uuid"""
     return f'{datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}-{uuid.uuid4()}'
 
+def remove_dataparallel_wrapper(state_dict):
+    """
+    Remove the DataParallel wrapper from the model state dictionary.
+
+    Parameters
+    ----------
+    state_dict : dict
+        The model state dictionary.
+
+    Returns
+    -------
+    dict
+        The model state dictionary without the DataParallel wrapper.
+    """
+    # Check if sr_state_dict is actually a DataParallel object
+    if isinstance(state_dict, torch.nn.DataParallel):
+        # Unwrap the model from DataParallel to access the actual state_dict
+        state_dict = state_dict.module.state_dict()
+    return state_dict
+
+
 def load_model(path):
     """
     Load the model checkpoint and return the model and the history.
