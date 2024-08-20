@@ -34,7 +34,7 @@ class FullNet():
         """
         u.save_model(self.model, self.history, path, name)
 
-    def train(self, image : str, master : np.ndarray, slave : np.ndarray, epochs=100, learning_rate=0.001, PCA=False, n_components=1, super_resolution_state_dict=None, loss_function=LNCC3D):
+    def train(self, image : str, master : np.ndarray, slave : np.ndarray, epochs=100, learning_rate=0.001, PCA=False, n_components=1, super_resolution_state_dict=None, loss_function=CC3D([9, 9, 2])):
         # region DOCSTRING
         """
         Trains a deep learning model for image registration using a 3D Convolutional Neural Network (CNN) with optional Principal Component Analysis (PCA) preprocessing.
@@ -85,7 +85,7 @@ class FullNet():
             master = u.get_PCA(master, n_components, normalize=False)
             slave = u.get_PCA(slave, n_components, normalize=False)
 
-        xtra, ytra = map(u.prepare_img_dimensions(), [master, slave])
+        xtra, ytra = map(u.prepare_img_dimensions, [master, slave])
 
         _, channels, heigth, width = xtra.shape
 
@@ -166,6 +166,7 @@ class FullNet():
             'losses' : losses,
             'weights' : weights,
             'loss_function' : loss_function.__str__(),
+            'loss' : best_loss.item(),
             'time' : time.time() - initial_time,
             'PCA' : PCA
         }
