@@ -20,6 +20,10 @@ files = os.listdir(folder)
 results = {}
 for file in files:
     model = FullNet(os.path.join(folder, file))
-    
+    loss_function = model.history['training'][0]['loss_function']
     registered, _, _ = model.evaluate(master, slave)
-    pprint(u.take_metrics_between_imgs(master, registered))
+    metrics = u.take_metrics_between_imgs(master, registered)
+    _, titles = u.get_metrics()
+    results[loss_function] = dict(zip(titles, metrics))
+
+pprint(results)

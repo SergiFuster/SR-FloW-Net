@@ -207,7 +207,6 @@ class FullNet():
         s2_down, s2sr_fine_tuned, s2sr = np.array(xtra)[0], np.array(s2sr_fine_tuned)[0], np.array(s2sr)[0]
         s2_down, s2sr_fine_tuned, s2sr =  np.moveaxis(s2_down, 0, -1), np.moveaxis(s2sr_fine_tuned, 0, -1), np.moveaxis(s2sr, 0, -1)
         return s2_down, s2_patch, s2sr_fine_tuned, s2sr
-    
 
 class RuNet():
     def __init__(self, model_path=None):
