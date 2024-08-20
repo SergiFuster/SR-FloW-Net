@@ -432,27 +432,15 @@ def transform_to_img_shape(volume):
     """
     return np.moveaxis(volume[0], 0, -1)
 
-def show_results(xtra, ytra, s3sr, registered, flow):
+def show_results(*args):
     """Show the results of the registration"""
-    products = [xtra, ytra, s3sr, registered]
-    for i, product in enumerate(products):
-        if not is_img_shape(product): products[i] = transform_to_img_shape(product)
 
-    fig, axes = plt.subplots(2, 2)
+    fig, axes = plt.subplots(1, len(args))
     fig.suptitle('Results')
 
-    axes[0, 0].imshow(products[0])
-    axes[0, 0].set_title('Master')
-
-    axes[0, 1].imshow(products[1])
-    axes[0, 1].set_title('Slave')
-
-    axes[1, 0].imshow(products[2])
-    axes[1, 0].set_title('Super Resolved')
-
-    axes[1, 1].imshow(products[3])
-    axes[1, 1].set_title('Registered')
-
+    for i, img in enumerate(args):
+        if not is_img_shape(img): img = transform_to_img_shape(img)
+        axes[i].imshow(img, cmap='gray', vmin=0, vmax=1)
     plt.show()
 
 def get_PCA(img, n : int, normalize=True):

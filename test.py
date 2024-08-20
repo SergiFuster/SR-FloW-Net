@@ -5,16 +5,15 @@ from pprint import pprint
 import  os, random
 from time import time
 
-sr_state_dict_path = 'src/experiments/runetv2/model-2024-08-15-14-45-55-9680919d-772b-42a9-847e-2d1cf71de850.pth'
-save_folder = 'src/experiments/fullnet'
-folders = ['data/images/S2', 'data/images/S3']
+folder = 'src/experiments/regnet'
 
-files = os.listdir(folders[0])
+files = os.listdir(folder)
 for file in files:
-    master, slave = [os.path.join(folder, file) for folder in folders]
-    master, slave = u.extract_s2mat(master), u.extract_s3mat(slave)
-    master = u.downsample(master, 1024)
-    model = FullNet()
-    sr_state_dict, _ = u.load_model(sr_state_dict_path)
-    model.train(file, master, slave, 10000, 0.0001, super_resolution_state_dict=sr_state_dict)
-    model.save(save_folder)
+    model = RegNetWrapper(os.path.join(folder, file))
+    image = model.history['training'][0]['image']
+    master = u.extract_s2mat(f'data/images/S2/{image}')
+    slave = u.extract_s3mat(f'data/images/S3/{image}')
+    master, *(_) = u.extract_central_patch(master, 5280)
+    slave, *(_) = u.extract_central_patch(slave, 352)
+    master, slave = master[:, :, -1:], slave[:, :, -1:]
+    model.evaluate(master, slave)
