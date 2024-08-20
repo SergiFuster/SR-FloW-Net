@@ -16,5 +16,5 @@ for file in files:
     master = u.downsample(master, 1024)
     model = FullNet()
     sr_state_dict, _ = u.load_model(sr_state_dict_path)
-    model.train(file, master, slave, 10000, 0.0001)
+    model.train(file, master, slave, 10000, 0.0001, super_resolution_state_dict=sr_state_dict)
     model.save(save_folder)
