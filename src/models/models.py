@@ -34,24 +34,60 @@ class FullNet():
         """
         u.save_model(self.model, self.history, path, name)
 
-    def train(self, image_index, epochs=100, learning_rate=0.001, patch_size=1024, PCA=False, n_components=1,
-                super_resolution_state_dict=None, loss_function=LNCC3D):
+    def train(self, image : str, master : np.ndarray, slave : np.ndarray, epochs=100, learning_rate=0.001, PCA=False, n_components=1, super_resolution_state_dict=None, loss_function=LNCC3D):
+        # region DOCSTRING
+        """
+        Trains a deep learning model for image registration using a 3D Convolutional Neural Network (CNN) with optional Principal Component Analysis (PCA) preprocessing.
 
-        s2_image = u.extract_s2mat(f'data/images/S2/{image_index}.mat')
-        s3_image = u.extract_s3mat(f'data/images/S3/{image_index}.mat')
+        Parameters
+        ----------
+        image : str
+            The identifier for the input image or the corresponding dataset.
+        master : np.ndarray
+            The master image or fixed image in the registration process, represented as a NumPy array.
+        slave : np.ndarray
+            The slave image or moving image in the registration process, represented as a NumPy array.
+        epochs : int, optional, default=100
+            The number of epochs to train the model.
+        learning_rate : float, optional, default=0.001
+            The initial learning rate for the optimizer.
+        PCA : bool, optional, default=False
+            If True, apply Principal Component Analysis (PCA) to reduce dimensionality of the input images.
+        n_components : int, optional, default=1
+            The number of principal components to keep if PCA is applied.
+        super_resolution_state_dict : dict or None, optional, default=None
+            A dictionary containing pre-trained weights for super-resolution, if any.
+        loss_function : callable, optional, default=LNCC3D
+            The primary loss function for training, typically used for measuring the similarity between the registered images.
 
-        s2_patch, *(_) = u.extract_central_patch(s2_image, patch_size) # s2
-        s3_patch, *(_) = u.extract_central_patch(s3_image, patch_size // 15) # s3
+        Returns
+        -------
+        None
+            This method trains the model in place and does not return anything. The trained model's state dictionary is stored in `self.model`, and training history is updated in `self.history['training']`.
 
+        Notes:
+        -----
+        - If multiple GPUs are available, the model will be trained using `DataParallel` to distribute the workload.
+        - The training process includes calculating three different losses: the primary similarity loss (e.g., LNCC3D), a gradient loss, and an L2 loss for the super-resolution output.
+        - The training process monitors and saves the best model (based on loss) during the training loop.
+        - Training history, including losses and learning rates across epochs, is recorded and stored in `self.history`.
+        - This method assumes that the utility functions such as `get_PCA`, `prepare_img_dimensions`, and `get_device` are implemented elsewhere in the codebase and are accessible via the `u` namespace.
+        - The optimizer used for training is Adam, with a learning rate that remains constant throughout the training process, unless modified externally.
 
+        Example:
+        -------
+        >>> model = FullNet()
+        >>> trainer.train(image="01", master=np_array_master, slave=np_array_slave, epochs=50, learning_rate=0.0005)
+
+        """
+        # endregion
         if PCA:
-            s2_patch_pca = u.get_PCA(s2_patch, n_components, normalize=normalize_pca)
-            s3_patch_pca = u.get_PCA(s3_patch, n_components, normalize=normalize_pca)
+            master = u.get_PCA(master, n_components, normalize=False)
+            slave = u.get_PCA(slave, n_components, normalize=False)
 
-        inputs = (s2_patch_pca, s3_patch_pca) if PCA else (s2_patch, s3_patch)
-        xtra, ytra = u.prepare_img_dimensions(inputs[0]), u.prepare_img_dimensions(inputs[1])
+        xtra, ytra = map(u.prepare_img_dimensions(), [master, slave])
 
-        patches, channels, heigth, width = xtra.shape
+        _, channels, heigth, width = xtra.shape
 
         model = FullRegNet((channels, heigth, width), super_resolution_state_dict)
 
@@ -126,7 +162,7 @@ class FullNet():
         history_item = {
             'epochs' : epochs,
             'learning_rate' : learning_rate,
-            'image' : image_index,
+            'image' : image,
             'losses' : losses,
             'weights' : weights,
             'loss_function' : loss_function.__str__(),
