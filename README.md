@@ -46,6 +46,8 @@ Run the training script:
 python train.py --data_dir data --epochs 50 --batch_size 16
 ```
 
+The complete dataset and information of every coupled Sentinel-2/Sentinel-3 pair used in the experimentation can be found in: [DATASET](https://ujies.sharepoint.com/sites/Z365-EVIS/Documents%20compartits/Forms/AllItems.aspx?csf=1&web=1&e=BCECgp&CID=39444ccc%2Df63d%2D4b61%2D82e2%2Da7f9ef5f60b7&FolderCTID=0x012000830B65DFB949E748998958F7F3AA09D9&id=%2Fsites%2FZ365%2DEVIS%2FDocuments%20compartits%2FPublic%5FData%2FS2%20S3%20DATASET%20FLOU%2DNET)
+
 ### Inference
 
 Use the trained model to perform image registration on new data:
