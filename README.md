@@ -1,4 +1,4 @@
-# FloU-Net: AI Model for Multispectral Image Registration
+# SR-FloW-Net: AI Model for Multispectral Image Registration and Super-Resolution
 
 ## Overview
 
