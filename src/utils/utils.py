@@ -378,7 +378,7 @@ def load_model(path):
         print(f'Error loading model from {path}')
         print(e)
 
-def save_model(state_dict, history, path, model_name=None):
+def save_model(state_dict, history, path, prefix, model_name=None):
     """
     Save the model checkpoint with the log and parameters in the given path.
 
@@ -402,7 +402,7 @@ def save_model(state_dict, history, path, model_name=None):
     -------
     None
     """
-    if not model_name: model_name = f'model-{unique_name()}.pth'
+    if not model_name: model_name = f'{prefix}-{unique_name()}.pth'
 
     path = os.path.join(path, model_name)
     
@@ -432,10 +432,58 @@ def transform_to_img_shape(volume):
     """
     return np.moveaxis(volume[0], 0, -1)
 
+def mix_images_chessboard(image1: np.ndarray, image2: np.ndarray, n: int) -> np.ndarray:
+    # Ensure images have the same shape
+    if image1.shape != image2.shape:
+        raise ValueError("Both images must have the same dimensions.")
+    
+    # Image dimensions
+    size = image1.shape
+    
+    height = size[0]
+    width = size[1]
+
+    # Calculate the size of each square
+    square_height = height // n
+    square_width = width // n
+    
+    # Initialize the result image
+    mixed_image = np.zeros_like(image1)
+    
+    # Create the checkerboard pattern
+    for i in range(n):
+        for j in range(n):
+            # Determine the start and end points for the current square
+            y_start = i * square_height
+            y_end = (i + 1) * square_height if i < n - 1 else height
+            x_start = j * square_width
+            x_end = (j + 1) * square_width if j < n - 1 else width
+            
+            # Alternate between image1 and image2
+            if (i + j) % 2 == 0:
+                mixed_image[y_start:y_end, x_start:x_end] = image1[y_start:y_end, x_start:x_end]
+            else:
+                mixed_image[y_start:y_end, x_start:x_end] = image2[y_start:y_end, x_start:x_end]
+    
+    return mixed_image
+
+def show_in_rows(*args):
+    """Show images in rows"""
+    white_box = np.ones(args[0].shape[:2])
+    cols = max([img.shape[2] for img in args])
+    fig, axes = plt.subplots(len(args), cols, sharex=True, sharey=True)
+    for row, img in enumerate(args):
+        for col in range(cols):
+            if col < img.shape[2]:
+                axes[row, col].imshow(img[:, :, col], cmap='gray', vmin=0, vmax=1)
+            else:
+                axes[row, col].imshow(white_box, cmap='gray', vmin=0, vmax=1)
+    plt.show()
+
 def show_results(*args):
     """Show the results of the registration"""
 
-    fig, axes = plt.subplots(1, len(args))
+    fig, axes = plt.subplots(1, len(args), sharex=True, sharey=True)
     fig.suptitle('Results')
 
     for i, img in enumerate(args):

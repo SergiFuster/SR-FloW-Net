@@ -75,19 +75,19 @@ class RegNet(nn.Module):
 
         # Source = S3, Target = S2 
         # Processing s2 data if required
-        
+        master, slave = target.clone(), source.clone()
         # ------------ HEAD ------------ #
-        if self.cs3>1:
-            source = self.chan_s3(source)
+        if source.shape[1] > 1:
+            slave = source[:, -1:, :, :]
         
-        if self.cs2>1:
-            target = self.chan_s2(target)
+        if target.shape[1] > 1:
+            master = target[:, -1:, :, :]
 
-        if self.ratio>1:
-            target = self.down_s2(target)
+        if target.shape[2] != source.shape[2]:
+            master = self.down_s2(master)
         
         # Concatenate inputs (s3+s2)
-        x = torch.cat([source, target], dim=1)
+        x = torch.cat([slave, master], dim=1)
 
         # ------------ BODY ------------ #
         
@@ -105,9 +105,14 @@ class RegNet(nn.Module):
         #flow_field = self.fullsize(flow_field)
 
         # Warp image with flow field
-        y_source = self.transformer(source, flow_field)
-        if self.cs3>1:
-            y_source = self.unchan(y_source)
+        if registration:
+            layer0 = self.transformer(source[:, :1, :, :], flow_field)
+            layer1 = self.transformer(source[:, 1:2, :, :], flow_field)
+            layer2 = self.transformer(source[:, 2:3, :, :], flow_field)
+            layer3 = self.transformer(source[:, 3:, :, :], flow_field)
+            y_source = torch.cat([layer0, layer1, layer2, layer3], dim=1)
+        else:
+            y_source = self.transformer(slave, flow_field)
         return y_source, flow_field
 
 class FullRegNet(nn.Module):

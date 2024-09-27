@@ -10,7 +10,7 @@ import torch
 import json
 import time
 
-class FullNet():
+class Super_FloW_Net():
     def __init__(self, model_path=None):
         """
         Parameters
@@ -32,7 +32,7 @@ class FullNet():
         """
         Save the model and its history to a path.
         """
-        u.save_model(self.model, self.history, path, name)
+        u.save_model(self.model, self.history, path, name, prefix='Super-FloW-Net')
 
     def train(self, image : str, master : np.ndarray, slave : np.ndarray, epochs=100, learning_rate=0.001, PCA=False, n_components=1, super_resolution_state_dict=None, loss_function=CC3D([9, 9, 2])):
         # region DOCSTRING
@@ -245,6 +245,162 @@ class FullNet():
         s2_down, s2sr_fine_tuned, s2sr =  np.moveaxis(s2_down, 0, -1), np.moveaxis(s2sr_fine_tuned, 0, -1), np.moveaxis(s2sr, 0, -1)
         return s2_down, s2_patch, s2sr_fine_tuned, s2sr
 
+class DUnet():
+    def __init__(self, model_path=None):
+        """
+        Parameters
+        ----------
+        hyperparameters : dict
+            Parameters for the model.
+            {
+                'epochs' : int,
+                'learning_rate' : float
+            }
+        """
+        if not model_path:
+            self.model = None 
+            self.history = {'training' : []}
+        else:
+            self.model, self.history = u.load_model(model_path)
+    
+    def save(self, path, name=None):
+        """
+        Save the model and its history to a path.
+        """
+        u.save_model(self.model, self.history, path=path, model_name=name, prefix='DUnet')
+
+    def train(self, image : str, master : np.ndarray, slave : np.ndarray, epochs=100, learning_rate=0.001, loss_function=CC3D([9, 9, 2])):
+        # region DOCSTRING
+        """
+        Trains a deep learning model for image registration using a 3D Convolutional Neural Network (CNN) with optional Principal Component Analysis (PCA) preprocessing.
+
+        Parameters
+        ----------
+        image : str
+            The identifier for the input image or the corresponding dataset.
+        master : np.ndarray
+            The master image or fixed image in the registration process, represented as a NumPy array.
+        slave : np.ndarray
+            The slave image or moving image in the registration process, represented as a NumPy array.
+        epochs : int, optional, default=100
+            The number of epochs to train the model.
+        learning_rate : float, optional, default=0.001
+            The initial learning rate for the optimizer.
+        PCA : bool, optional, default=False
+            If True, apply Principal Component Analysis (PCA) to reduce dimensionality of the input images.
+        n_components : int, optional, default=1
+            The number of principal components to keep if PCA is applied.
+        super_resolution_state_dict : dict or None, optional, default=None
+            A dictionary containing pre-trained weights for super-resolution, if any.
+        loss_function : callable, optional, default=LNCC3D
+            The primary loss function for training, typically used for measuring the similarity between the registered images.
+
+        Returns
+        -------
+        None
+            This method trains the model in place and does not return anything. The trained model's state dictionary is stored in `self.model`, and training history is updated in `self.history['training']`.
+
+        Notes:
+        -----
+        - If multiple GPUs are available, the model will be trained using `DataParallel` to distribute the workload.
+        - The training process includes calculating three different losses: the primary similarity loss (e.g., LNCC3D), a gradient loss, and an L2 loss for the super-resolution output.
+        - The training process monitors and saves the best model (based on loss) during the training loop.
+        - Training history, including losses and learning rates across epochs, is recorded and stored in `self.history`.
+        - This method assumes that the utility functions such as `get_PCA`, `prepare_img_dimensions`, and `get_device` are implemented elsewhere in the codebase and are accessible via the `u` namespace.
+        - The optimizer used for training is Adam, with a learning rate that remains constant throughout the training process, unless modified externally.
+
+        Example:
+        -------
+        >>> model = FullNet()
+        >>> trainer.train(image="01", master=np_array_master, slave=np_array_slave, epochs=50, learning_rate=0.0005)
+
+        """
+        # endregion
+
+        xtra, ytra = map(u.prepare_img_dimensions, [master, slave])
+
+        _, channels, heigth, width = xtra.shape
+
+        model = SRegNet((channels, heigth, width))
+
+        print('-- Model training')
+
+        cudnn.benchmark = True
+
+        device = u.get_device()
+
+        model.to(device)
+
+        model.train()
+
+        opt = torch.optim.Adam(model.parameters(), lr=learning_rate, maximize=False)
+        print('-- Using Adam optimizer')
+        
+        loss_functions = [loss_function.loss, Grad('l2', loss_mult=1).loss]
+
+        weights = [1, 0.5, 0.5]
+
+        xtra, ytra = torch.tensor(xtra).to(device), torch.tensor(ytra).to(device)
+        initial_time = time.time()
+
+        best_model = None
+        best_loss = None
+
+        print(f'-- Training for {epochs} epochs')
+        for epoch in range(epochs):
+
+            reg, flow = model(xtra, ytra)   
+
+            loss = 0
+
+            loss += loss_functions[0](xtra, reg) * weights[0]
+
+            loss += loss_functions[1](xtra, flow) * weights[1]
+
+            loss_info = f'loss: {loss.item()})'
+            opt.zero_grad()
+            loss.backward()
+            opt.step()
+
+            epoch_info = f'Epoch: {epoch + 1}'
+            print('  '.join((epoch_info, loss_info)), flush=True)
+
+            if not best_model or loss < best_loss: best_model, best_loss = model.state_dict(), loss
+
+        history_item = {
+            'epochs' : epochs,
+            'learning_rate' : learning_rate,
+            'image' : image,
+            'weights' : weights,
+            'loss_function' : loss_function.__str__(),
+            'loss' : best_loss.item(),
+            'time' : time.time() - initial_time
+        }
+
+        self.history['training'].append(history_item)
+        self.model = model
+
+    def evaluate(self, master_image : np.ndarray, slave_image : np.ndarray):
+
+        xtra, ytra = u.prepare_img_dimensions(master_image), u.prepare_img_dimensions(slave_image)
+
+        device = u.get_device()
+
+        self.model.to(device)
+        self.model.eval()
+
+        xtra, ytra =  torch.tensor(xtra).to(device), torch.tensor(ytra).to(device)
+
+        with torch.inference_mode():
+                    
+            registered, flow = self.model(xtra, ytra)
+            registered = registered.cpu().detach().numpy().astype(np.float32)
+
+        # u.show_results(registered)
+        registered = u.undo_tensor_format(registered)
+        return registered
+
+
 class RuNet():
     def __init__(self, model_path=None):
         """
@@ -264,7 +420,7 @@ class RuNet():
         """
         Save the model and its history to a path.
         """
-        u.save_model(self.model, self.history, path, name)
+        u.save_model(self.model, self.history, path, name, prefix='RUNet1')
 
     def train(self, data : np.ndarray, epochs : int, learning_rate : float, resolution : int=None, ratio : int=None):
         # region DOCSTRING
@@ -399,7 +555,7 @@ class RuNetv2():
         """
         Save the model and its history to a path.
         """
-        u.save_model(self.model, self.history, path, name)
+        u.save_model(self.model, self.history, path, name, prefix='RUNet2')
 
     def train(self, data : np.ndarray, epochs : int, learning_rate : float, upsamplings : int):
         # region DOCSTRING
@@ -506,7 +662,7 @@ class RuNetv2():
         sr = u.undo_tensor_format(sr)
         return sr
 
-class RegNetWrapper():
+class FloU_Net():
     def __init__(self, model_path=None):
         """
         Parameters
@@ -528,10 +684,10 @@ class RegNetWrapper():
         """
         Save the model and its history to a path.
         """
-        u.save_model(self.model, self.history, path, name)
+
+        u.save_model(self.model, self.history, path=path, model_name=name, prefix='FloU-Net')
 
     def train(self, image : str, master : np.ndarray, slave : np.ndarray, epochs=100, learning_rate=0.001):
-        # region DOCSTRING
         """
         Trains a deep learning model for image registration using a 3D Convolutional Neural Network (CNN) with optional Principal Component Analysis (PCA) preprocessing.
 
@@ -568,7 +724,6 @@ class RegNetWrapper():
         >>> model.train(image="01", master=np_array_master, slave=np_array_slave, epochs=50, learning_rate=0.0005)
 
         """
-        # endregion
 
         xtra, ytra = map(u.prepare_img_dimensions, [master, slave])
 
@@ -577,7 +732,8 @@ class RegNetWrapper():
 
         if channels > 1: xtra, ytra = xtra[:, -1:, :, :], ytra[:, -1:, :, :]
 
-        model = RegNet((heigth, width), RATIO=15)
+        ratio = xtra.shape[2]//ytra.shape[2]
+        model = RegNet((heigth, width), RATIO=ratio)
 
         if u.multi_gpu():
             print('Multiple GPUs detected, using DataParallel')
@@ -598,7 +754,7 @@ class RegNetWrapper():
         opt = torch.optim.Adam(model.parameters(), lr=learning_rate, maximize=False)
         print('-- Using Adam optimizer')
         
-        loss_functions = [NCC(scale=15).loss, Grad('l2', loss_mult=1).loss]
+        loss_functions = [NCC(scale=ratio).loss, Grad('l2', loss_mult=1).loss]
 
         weights = [1, 0.5]
 
@@ -612,8 +768,7 @@ class RegNetWrapper():
         print(f'-- Training for {epochs} epochs')
         for epoch in range(epochs):
 
-            reg, flow = model(xtra, ytra)   
-
+            reg, flow = model(xtra, ytra)
             loss = 0
             losses_dict = {}
 
@@ -671,12 +826,9 @@ class RegNetWrapper():
 
         with torch.inference_mode():
                     
-            registered, flow = self.model(xtra, ytra)
+            registered, flow = self.model(xtra, ytra, registration=True)
             registered = registered.cpu().detach().numpy().astype(np.float32)
-            flow = flow.cpu().detach().numpy().astype(np.float32)
-            xtra = xtra.cpu().detach().numpy().astype(np.float32)
-            ytra = ytra.cpu().detach().numpy().astype(np.float32)
 
-        u.show_results(xtra, ytra, registered)
-        registered, xtra = list(map(u.undo_tensor_format, [registered, xtra]))
-        return registered, xtra
+        # u.show_results(xtra, ytra, registered)
+        registered = u.undo_tensor_format(registered)
+        return registered
