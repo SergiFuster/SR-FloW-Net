@@ -1,8 +1,8 @@
-# FloU-Net: AI Model for Multispectral Image Registration
+# SR-FloW-Net: AI Model for Multispectral Image Registration and Super-Resolution
 
 ## Overview
 
-FloU-Net is a deep learning model designed for the registration of multispectral images. This model aligns images taken from different spectral bands, enabling accurate and efficient analysis of multispectral data. The FloU-Net architecture leverages the power of convolutional neural networks (CNNs) to learn complex spatial transformations and align images with high precision.
+SR-FloW-Net is a deep learning model designed for the registration of multispectral images. This model aligns images taken from different spectral bands, enabling accurate and efficient analysis of multispectral data. The SR-FloW-Net architecture leverages the power of convolutional neural networks (CNNs) to learn complex spatial transformations and align images with high precision.
 
 ## Features
 
@@ -16,8 +16,8 @@ FloU-Net is a deep learning model designed for the registration of multispectral
 Clone the repository and navigate to the project directory:
 
 ```bash
-git clone https://github.com/SergiFuster/FloU-Net.git
-cd FloU-Net
+git clone https://github.com/SergiFuster/SR-FloW-Net.git
+cd SR-FloW-Net
 ```
 
 Install the required dependencies:
