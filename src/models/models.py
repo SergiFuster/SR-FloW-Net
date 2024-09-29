@@ -34,7 +34,7 @@ class SR_FloW_Net():
         """
         u.save_model(self.model, self.history, path, 'SR-FloW-Net', model_name=name)
 
-    def train(self, image : str, master : np.ndarray, slave : np.ndarray, epochs=100, learning_rate=0.001, PCA=False, n_components=1, super_resolution_state_dict=None, loss_function=CC3D([9, 9, 2])):
+    def train(self, image : str, master : np.ndarray, slave : np.ndarray, epochs=100, learning_rate=0.001, super_resolution_state_dict=None, loss_function=CC3D([9, 9, 2])):
         # region DOCSTRING
         """
         Trains a deep learning model for image registration using a 3D Convolutional Neural Network (CNN) with optional Principal Component Analysis (PCA) preprocessing.
