@@ -10,7 +10,7 @@ import torch
 import json
 import time
 
-class Super_FloW_Net():
+class SR_FloW_Net():
     def __init__(self, model_path=None):
         """
         Parameters
@@ -32,7 +32,7 @@ class Super_FloW_Net():
         """
         Save the model and its history to a path.
         """
-        u.save_model(self.model, self.history, path, name, prefix='Super-FloW-Net')
+        u.save_model(self.model, self.history, path, 'SR-FloW-Net', model_name=name)
 
     def train(self, image : str, master : np.ndarray, slave : np.ndarray, epochs=100, learning_rate=0.001, PCA=False, n_components=1, super_resolution_state_dict=None, loss_function=CC3D([9, 9, 2])):
         # region DOCSTRING
@@ -81,9 +81,6 @@ class Super_FloW_Net():
 
         """
         # endregion
-        if PCA:
-            master = u.get_PCA(master, n_components, normalize=False)
-            slave = u.get_PCA(slave, n_components, normalize=False)
 
         xtra, ytra = map(u.prepare_img_dimensions, [master, slave])
 
