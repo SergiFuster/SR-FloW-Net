@@ -51,6 +51,31 @@ pip install -r requirements.txt
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 
 ```
+
+## Train a Model
+
+A script has already been prepared to run after setting up the virtual environment. Ensure that the images from the dataset mentioned below are placed in the working directory.
+
+The script is designed to take images from the following structure:
+
+```
+data
+│
+├── S2
+│   └── 18.mat
+│
+└── S3
+    └── 18.mat
+```
+
+Once the working directory is set up, you can execute the script by running the following command in the command line (cmd) or by using an IDE such as [Visual Studio Code](https://code.visualstudio.com/):
+
+```bash
+python test.py
+```
+
+**Note:** The predefined number of epochs is set to 1000, which is the minimum required to achieve satisfactory results.
+
 ## Dataset
 The dataset used for our experiments can be found at [DATASET](https://ujies.sharepoint.com/sites/Z365-EVP/Documents%20compartits/Forms/AllItems.aspx?id=%2Fsites%2FZ365%2DEVP%2FDocuments%20compartits%2FPublic%2DData%2FS2%20S3%20DATASET%20FLOU%2DNET&p=true&ga=1)
 
