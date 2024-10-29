@@ -35,6 +35,12 @@ Install the required dependencies:
 ```bash
 pip install -r requirements.txt
 ```
+
+To avoid installation problems torch is going to be installed independently with:
+```bash
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+```
+
 All in one:
 ```
 git clone https://github.com/SergiFuster/SR-FloW-Net.git
@@ -42,6 +48,8 @@ cd SR-FloW-Net
 python -m venv myvenv
 ./myvenv/Scripts/activate
 pip install -r requirements.txt
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
 ```
 ## Dataset
 The dataset used for our experiments can be found at [DATASET](https://ujies.sharepoint.com/sites/Z365-EVP/Documents%20compartits/Forms/AllItems.aspx?id=%2Fsites%2FZ365%2DEVP%2FDocuments%20compartits%2FPublic%2DData%2FS2%20S3%20DATASET%20FLOU%2DNET&p=true&ga=1)
