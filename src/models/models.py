@@ -37,7 +37,7 @@ class SR_FloW_Net():
     def train(self, image : str, master : np.ndarray, slave : np.ndarray, epochs=100, learning_rate=0.001, super_resolution_state_dict=None, loss_function=CC3D([9, 9, 2])):
         # region DOCSTRING
         """
-        Trains a deep learning model for image registration using a 3D Convolutional Neural Network (CNN) with optional Principal Component Analysis (PCA) preprocessing.
+        Trains a deep learning model for image registration using a 3D Convolutional Neural Network (CNN).
 
         Parameters
         ----------
@@ -51,10 +51,6 @@ class SR_FloW_Net():
             The number of epochs to train the model.
         learning_rate : float, optional, default=0.001
             The initial learning rate for the optimizer.
-        PCA : bool, optional, default=False
-            If True, apply Principal Component Analysis (PCA) to reduce dimensionality of the input images.
-        n_components : int, optional, default=1
-            The number of principal components to keep if PCA is applied.
         super_resolution_state_dict : dict or None, optional, default=None
             A dictionary containing pre-trained weights for super-resolution, if any.
         loss_function : callable, optional, default=LNCC3D
@@ -164,8 +160,7 @@ class SR_FloW_Net():
             'weights' : weights,
             'loss_function' : loss_function.__str__(),
             'loss' : best_loss.item(),
-            'time' : time.time() - initial_time,
-            'PCA' : PCA
+            'time' : time.time() - initial_time
         }
 
         self.history['training'].append(history_item)

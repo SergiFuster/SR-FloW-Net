@@ -2,6 +2,7 @@ import numpy as np, h5py, cv2, torch, shutil, os, sys, json, uuid, src.metrics.m
 from datetime import datetime
 from matplotlib import pyplot as plt
 from PIL import Image
+import torch.nn as nn
 from time import time
 from matplotlib import colors
 # from sklearn.decomposition import PCA
@@ -412,11 +413,18 @@ def save_model(state_dict, history, path, prefix, model_name=None):
     }
 
     try:
+        os.makedirs(os.path.dirname(path), exist_ok=True) # Create the directory if it doesn't exist
         torch.save(checkpoint, path)
         print(f'Model saved in {path}')
     except Exception as e:
         print(f'Error saving model in {path}')
         print(e)
+
+def init_weights(m):
+    if isinstance(m, nn.Linear) or isinstance(m, nn.Conv2d):
+        nn.init.uniform_(m.weight, a=-0.01, b=0.01)
+        if m.bias is not None:
+            nn.init.constant_(m.bias, 0)
 
 def is_img_shape(volume):
     """
