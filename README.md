@@ -1,4 +1,4 @@
-# SR-FloW-Net: Multimodal Self-Supervised Image Super-resolution and Registration for Remote Sensing Imagery
+# Multimodal Self-Supervised Image Super-resolution and Registration for Remote Sensing Imagery
 
 ## Overview
 
@@ -60,12 +60,12 @@ The script is designed to take images from the following structure:
 
 ```
 data
-│
-├── S2
-│   └── 18.mat
-│
-└── S3
-    └── 18.mat
+└── images
+│   ├── S2
+│   │   └── 18.mat
+│   │
+│   └── S3
+│       └── 18.mat
 ```
 
 Once the working directory is set up, you can execute the script by running the following command in the command line (cmd) or by using an IDE such as [Visual Studio Code](https://code.visualstudio.com/):
@@ -75,6 +75,40 @@ python test.py
 ```
 
 **Note:** The predefined number of epochs is set to 1000, which is the minimum required to achieve satisfactory results.
+
+## Check Saved Models
+
+If you have trained models and saved them in your working directory, you might be interested in using the embedded Python application included in this repository.
+
+To launch the application, run the `app.py` script by executing the following command:
+
+```bash
+python app.py
+```
+
+Next, open your browser and navigate to [http://127.0.0.1:5000](http://127.0.0.1:5000).
+
+All files with a `.pth` extension will be displayed. By clicking on a valid file, you will see the model information for each training session in JSON format, as illustrated in the example below:
+
+```json
+{
+  "training": [
+    {
+      "epochs": 1000,
+      "image": "model_name",
+      "learning_rate": 0.001,
+      "loss": -0.491024579178,
+      "loss_function": "CC3D",
+      "time": 367.730907678604126,
+      "weights": [
+        1,
+        0.5,
+        0.5
+      ]
+    }
+  ]
+}
+```
 
 ## Dataset
 The dataset used for our experiments can be found at [DATASET](https://ujies.sharepoint.com/sites/Z365-EVP/Documents%20compartits/Forms/AllItems.aspx?id=%2Fsites%2FZ365%2DEVP%2FDocuments%20compartits%2FPublic%2DData%2FS2%20S3%20DATASET%20FLOU%2DNET&p=true&ga=1)
