@@ -10,7 +10,7 @@ import torch
 import json
 import time
 
-class SR_FloW_Net():
+class Model():
     def __init__(self, model_path=None):
         """
         Parameters
@@ -27,12 +27,14 @@ class SR_FloW_Net():
             self.history = {'training' : []}
         else:
             self.model, self.history = u.load_model(model_path)
-    
-    def save(self, path, name=None):
+
+    def save(self, path, name):
         """
         Save the model and its history to a path.
         """
-        u.save_model(self.model, self.history, path, 'SR-FloW-Net', model_name=name)
+        u.save_model(self.model, self.history, path, name)
+
+class SR_FloW_Net(Model):
 
     def train(self, image : str, master : np.ndarray, slave : np.ndarray, epochs=100, learning_rate=0.001, super_resolution_state_dict=None, loss_function=CC3D([9, 9, 2])):
         # region DOCSTRING
@@ -83,10 +85,6 @@ class SR_FloW_Net():
         _, channels, heigth, width = xtra.shape
 
         model = FullRegNet((channels, heigth, width), super_resolution_state_dict)
-
-        if u.multi_gpu():
-            print('Multiple GPUs detected, using DataParallel')
-            model = nn.DataParallel(model)
 
         print('-- Model training')
 
@@ -237,29 +235,7 @@ class SR_FloW_Net():
         s2_down, s2sr_fine_tuned, s2sr =  np.moveaxis(s2_down, 0, -1), np.moveaxis(s2sr_fine_tuned, 0, -1), np.moveaxis(s2sr, 0, -1)
         return s2_down, s2_patch, s2sr_fine_tuned, s2sr
 
-class DUnet():
-    def __init__(self, model_path=None):
-        """
-        Parameters
-        ----------
-        hyperparameters : dict
-            Parameters for the model.
-            {
-                'epochs' : int,
-                'learning_rate' : float
-            }
-        """
-        if not model_path:
-            self.model = None 
-            self.history = {'training' : []}
-        else:
-            self.model, self.history = u.load_model(model_path)
-    
-    def save(self, path, name=None):
-        """
-        Save the model and its history to a path.
-        """
-        u.save_model(self.model, self.history, path=path, model_name=name, prefix='DUnet')
+class DUnet(Model):
 
     def train(self, image : str, master : np.ndarray, slave : np.ndarray, epochs=100, learning_rate=0.001, loss_function=CC3D([9, 9, 2])):
         # region DOCSTRING
@@ -392,27 +368,7 @@ class DUnet():
         registered = u.undo_tensor_format(registered)
         return registered
 
-
-class RuNet():
-    def __init__(self, model_path=None):
-        """
-        Parameters
-        ----------
-        model_path : str
-            Path to the model to load.
-            If None, a new model will be created.
-        """
-        if not model_path:
-            self.model = None 
-            self.history = {'training' : []}
-        else:
-            self.model, self.history = u.load_model(model_path)
-
-    def save(self, path, name=None):
-        """
-        Save the model and its history to a path.
-        """
-        u.save_model(self.model, self.history, path, name, prefix='RUNet1')
+class RuNet(Model):
 
     def train(self, data : np.ndarray, epochs : int, learning_rate : float, resolution : int=None, ratio : int=None):
         # region DOCSTRING
@@ -528,26 +484,7 @@ class RuNet():
         sr = u.undo_tensor_format(sr)
         return sr
     
-class RuNetv2():
-    def __init__(self, model_path=None):
-        """
-        Parameters
-        ----------
-        model_path : str
-            Path to the model to load.
-            If None, a new model will be created.
-        """
-        if not model_path:
-            self.model = None 
-            self.history = {'training' : []}
-        else:
-            self.model, self.history = u.load_model(model_path)
-
-    def save(self, path, name=None):
-        """
-        Save the model and its history to a path.
-        """
-        u.save_model(self.model, self.history, path, name, prefix='RUNet2')
+class RuNetv2(Model):
 
     def train(self, data : np.ndarray, epochs : int, learning_rate : float, upsamplings : int):
         # region DOCSTRING
@@ -654,30 +591,7 @@ class RuNetv2():
         sr = u.undo_tensor_format(sr)
         return sr
 
-class FloU_Net():
-    def __init__(self, model_path=None):
-        """
-        Parameters
-        ----------
-        hyperparameters : dict
-            Parameters for the model.
-            {
-                'epochs' : int,
-                'learning_rate' : float
-            }
-        """
-        if not model_path:
-            self.model = None 
-            self.history = {'training' : []}
-        else:
-            self.model, self.history = u.load_model(model_path)
-    
-    def save(self, path, name=None):
-        """
-        Save the model and its history to a path.
-        """
-
-        u.save_model(self.model, self.history, path=path, model_name=name, prefix='FloU-Net')
+class FloU_Net(Model):
 
     def train(self, image : str, master : np.ndarray, slave : np.ndarray, epochs=100, learning_rate=0.001):
         """
@@ -726,10 +640,6 @@ class FloU_Net():
 
         ratio = xtra.shape[2]//ytra.shape[2]
         model = RegNet((heigth, width), RATIO=ratio)
-
-        if u.multi_gpu():
-            print('Multiple GPUs detected, using DataParallel')
-            model = nn.DataParallel(model)
 
         print('-- Model training')
 

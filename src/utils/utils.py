@@ -379,7 +379,7 @@ def load_model(path):
         print(f'Error loading model from {path}')
         print(e)
 
-def save_model(state_dict, history, path, prefix, model_name=None):
+def save_model(state_dict, history, path, model_name):
     """
     Save the model checkpoint with the log and parameters in the given path.
 
@@ -403,9 +403,8 @@ def save_model(state_dict, history, path, prefix, model_name=None):
     -------
     None
     """
-    if not model_name: model_name = f'{prefix}-{unique_name()}.pth'
-
-    path = os.path.join(path, model_name)
+    file_path = os.path.join(path, model_name, '.pth')
+    if os.path.exists(file_path): model_name = f'{path}-{model_name}-{unique_name()}.pth'
     
     checkpoint = {
         'state_dict': state_dict,
@@ -413,11 +412,11 @@ def save_model(state_dict, history, path, prefix, model_name=None):
     }
 
     try:
-        os.makedirs(os.path.dirname(path), exist_ok=True) # Create the directory if it doesn't exist
-        torch.save(checkpoint, path)
-        print(f'Model saved in {path}')
+        os.makedirs(os.path.dirname(file_path), exist_ok=True) # Create the directory if it doesn't exist
+        torch.save(checkpoint, file_path)
+        print(f'Model saved in {file_path}')
     except Exception as e:
-        print(f'Error saving model in {path}')
+        print(f'Error saving model in {file_path}')
         print(e)
 
 def init_weights(m):
