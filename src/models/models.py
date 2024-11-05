@@ -10,6 +10,9 @@ import torch
 import json
 import time
 
+"""
+Base template class for every model.
+"""
 class Model():
     def __init__(self, model_path=None):
         """

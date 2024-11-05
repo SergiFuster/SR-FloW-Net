@@ -403,7 +403,7 @@ def save_model(state_dict, history, path, model_name):
     -------
     None
     """
-    file_path = os.path.join(path, model_name, '.pth')
+    file_path = os.path.join(path, model_name + '.pth')
     if os.path.exists(file_path): model_name = f'{path}-{model_name}-{unique_name()}.pth'
     
     checkpoint = {

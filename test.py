@@ -18,7 +18,7 @@ def make_tests():
     u.show_channels_img(s3_patch, 'Slave Input')
 
     model = SR_FloW_Net()
-    model.train('image 18', s2_patch, s3_patch, 1000, 0.001)
+    model.train('image 18', s2_patch, s3_patch, 1, 0.001)
     model.save('experiments/', 'sr_flow_net')
     reg, _, s3sr = model.evaluate(s2_patch, s3_patch)
 
